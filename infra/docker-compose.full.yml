@@ -1,0 +1,103 @@
+# 통합 docker-compose — 모든 서비스 + DB + 워커 함께 띄움.
+# 로컬 dev 또는 르무엘 single-node 배포용.
+#   docker compose -f docker-compose.full.yml up -d --build
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: academy-postgres
+    environment:
+      POSTGRES_DB: academy
+      POSTGRES_USER: academy
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-academy}
+    ports: ["127.0.0.1:5439:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U academy"]
+      interval: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: academy-redis
+    ports: ["127.0.0.1:6389:6379"]
+
+  user-service:
+    build: ../services/user-service
+    container_name: academy-user-service
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/academy
+      DATABASE_USER: academy
+      DATABASE_PASSWORD: ${DB_PASSWORD:-academy}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: on-failure
+
+  catalog-service:
+    build: ../services/catalog-service
+    container_name: academy-catalog-service
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/academy
+      DATABASE_USER: academy
+      DATABASE_PASSWORD: ${DB_PASSWORD:-academy}
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: on-failure
+
+  media-service:
+    build: ../services/media-service
+    container_name: academy-media-service
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/academy
+      DATABASE_USER: academy
+      DATABASE_PASSWORD: ${DB_PASSWORD:-academy}
+      REDIS_URL: redis://redis:6379
+      R2_ENDPOINT: ${R2_ENDPOINT}
+      R2_BUCKET: ${R2_BUCKET:-lemuel-academy}
+      R2_ACCESS_KEY: ${R2_ACCESS_KEY}
+      R2_SECRET_KEY: ${R2_SECRET_KEY}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+    restart: on-failure
+
+  ffmpeg-worker:
+    build:
+      context: ../services/media-service
+      dockerfile: Dockerfile.worker
+    container_name: academy-ffmpeg-worker
+    environment:
+      DATABASE_URL_PG: postgres://academy:${DB_PASSWORD:-academy}@postgres:5432/academy
+      REDIS_URL: redis://redis:6379
+      R2_ENDPOINT: ${R2_ENDPOINT}
+      R2_BUCKET: ${R2_BUCKET:-lemuel-academy}
+      R2_ACCESS_KEY: ${R2_ACCESS_KEY}
+      R2_SECRET_KEY: ${R2_SECRET_KEY}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+    restart: on-failure
+    deploy:
+      resources:
+        limits: { cpus: "4.0", memory: 4g }
+
+  api-gateway:
+    build: ../services/api-gateway
+    container_name: academy-api-gateway
+    environment:
+      USER_SERVICE_URL: http://user-service:8081
+      CATALOG_SERVICE_URL: http://catalog-service:8082
+      MEDIA_SERVICE_URL: http://media-service:8083
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      - user-service
+      - catalog-service
+      - media-service
+    restart: on-failure
+
+volumes:
+  postgres_data:
