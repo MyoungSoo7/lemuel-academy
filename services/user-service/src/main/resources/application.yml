@@ -1,0 +1,37 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5439/academy}
+    username: ${DATABASE_USER:academy}
+    password: ${DATABASE_PASSWORD:academy}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: users_svc
+  flyway:
+    schemas: users_svc
+    default-schema: users_svc
+
+academy:
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production-must-be-at-least-256-bits-long}
+    ttl-hours: ${JWT_TTL_HOURS:24}
+    refresh-ttl-days: 7
+  oauth:
+    google:
+      client-id: ${OAUTH_GOOGLE_CLIENT_ID:}
+      client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET:}
+    kakao:
+      client-id: ${OAUTH_KAKAO_CLIENT_ID:}
+      client-secret: ${OAUTH_KAKAO_CLIENT_SECRET:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

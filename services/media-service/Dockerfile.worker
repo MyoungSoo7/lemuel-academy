@@ -1,0 +1,14 @@
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir boto3 psycopg[binary] redis
+
+WORKDIR /app
+COPY scripts/ /app/scripts/
+RUN chmod +x /app/scripts/transcode.sh
+
+USER nobody
+ENTRYPOINT ["python3", "/app/scripts/worker.py"]

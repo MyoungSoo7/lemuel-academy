@@ -1,0 +1,23 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: catalog-service
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5439/academy}
+    username: ${DATABASE_USER:academy}
+    password: ${DATABASE_PASSWORD:academy}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: catalog
+  flyway:
+    schemas: catalog
+    default-schema: catalog
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

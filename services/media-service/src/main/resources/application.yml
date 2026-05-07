@@ -1,0 +1,36 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: media-service
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5439/academy}
+    username: ${DATABASE_USER:academy}
+    password: ${DATABASE_PASSWORD:academy}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: media
+  flyway:
+    schemas: media
+    default-schema: media
+  data:
+    redis:
+      url: ${REDIS_URL:redis://127.0.0.1:6389}
+
+academy:
+  r2:
+    endpoint: ${R2_ENDPOINT:}
+    bucket: ${R2_BUCKET:lemuel-academy}
+    access-key: ${R2_ACCESS_KEY:}
+    secret-key: ${R2_SECRET_KEY:}
+    public-host: ${R2_PUBLIC_HOST:}     # 옵션: CDN/공개 도메인
+  ffmpeg:
+    queue-stream: media:transcode
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
