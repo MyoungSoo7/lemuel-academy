@@ -19,7 +19,9 @@ class SecurityConfig {
                 auth
                     .requestMatchers(
                         "/api/users/signup", "/api/users/login",
-                        "/api/users/oauth/**", "/actuator/**"
+                        "/api/users/oauth/**",
+                        "/api/users/dev/auto-login",
+                        "/actuator/**"
                     ).permitAll()
                     .anyRequest().authenticated()
             }

@@ -37,6 +37,29 @@ class AuthController(
 ) {
     private val encoder = BCryptPasswordEncoder()
 
+    /** Dev/MVP only — 역할별 데모 유저로 자동 로그인.
+     *  운영 시에는 비활성화 (profile=prod 에서 disable 등). */
+    @PostMapping("/dev/auto-login")
+    fun autoLogin(
+        @RequestParam(defaultValue = "STUDENT") role: String,
+    ): ResponseEntity<AuthResponse> {
+        val normalizedRole = runCatching { Role.valueOf(role.uppercase()) }
+            .getOrElse { Role.STUDENT }
+        val email = "demo-${normalizedRole.name.lowercase()}@academy.local"
+        val user = users.findByEmail(email) ?: users.save(User(
+            email = email,
+            displayName = when (normalizedRole) {
+                Role.STUDENT  -> "데모 학생"
+                Role.CREATOR  -> "데모 크리에이터"
+                Role.ADMIN    -> "데모 관리자"
+            },
+            role = normalizedRole,
+        ))
+        val token = jwt.issue(user.id!!, user.role.name)
+        return ResponseEntity.ok(AuthResponse(token, user.id.toString(),
+            user.role.name, user.displayName))
+    }
+
     @PostMapping("/signup")
     fun signup(@Valid @RequestBody req: SignupRequest): ResponseEntity<AuthResponse> {
         users.findByEmail(req.email)?.let {
