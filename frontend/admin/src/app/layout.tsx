@@ -1,4 +1,5 @@
 import "./globals.css";
+import AutoLogin from "@/components/AutoLogin";
 
 export default function RootLayout({
   children,
@@ -6,9 +7,11 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="bg-slate-900 text-slate-100 min-h-screen">
+        <AutoLogin role="ADMIN" />
         <header className="bg-red-700">
-          <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <span className="font-bold">⚠️ admin — lemuel academy</span>
+            <span className="text-xs text-red-100">데모 관리자 자동 로그인</span>
           </div>
         </header>
         <nav className="bg-slate-800">

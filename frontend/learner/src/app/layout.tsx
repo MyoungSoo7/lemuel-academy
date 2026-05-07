@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import AutoLogin from "@/components/AutoLogin";
 
 export const metadata: Metadata = {
   title: "lemuel academy",
@@ -12,12 +13,13 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="bg-gray-50 text-gray-900 min-h-screen">
+        <AutoLogin role="STUDENT" />
         <header className="border-b bg-white">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <a href="/" className="text-xl font-bold">lemuel academy</a>
             <nav className="space-x-4 text-sm">
               <a href="/" className="hover:underline">강의 둘러보기</a>
-              <a href="/login" className="hover:underline">로그인</a>
+              <span className="text-gray-400 text-xs">데모 학생 자동 로그인</span>
             </nav>
           </div>
         </header>

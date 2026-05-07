@@ -30,9 +30,11 @@ class JwtFilter(
 
         // Public paths: GET 만 자유, 나머지 메서드는 인증 필요 (간단 룰)
         val isPublic = publicPaths.any { matcher.match(it, path) } && method == "GET"
-        // /signup, /login 같은 정확 경로는 모든 메서드 허용
+        // /signup, /login, /dev/auto-login 같은 정확 경로는 모든 메서드 허용
         val isFullyPublic = listOf(
-            "/api/users/signup", "/api/users/login"
+            "/api/users/signup",
+            "/api/users/login",
+            "/api/users/dev/auto-login",
         ).any { matcher.match(it, path) }
 
         if (isPublic || isFullyPublic) return chain.filter(exchange)
