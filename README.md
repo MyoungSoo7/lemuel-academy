@@ -98,3 +98,22 @@ NEXT_PUBLIC_API_BASE=https://academy.lemuel.co.kr/api
 
 - 르무엘 (192.168.219.101): media-service (트랜스코딩 무거움), 모든 백엔드, 모든 프론트
 - DNS: academy.lemuel.co.kr (Cloudflare Tunnel)
+
+## 자동 로그인 (Phase 1 MVP)
+
+회원가입 없이 첫 진입시 역할별 데모 유저로 자동 로그인:
+- learner :3001 → STUDENT (`demo-student@academy.local`)
+- creator-studio :3002 → CREATOR (`demo-creator@academy.local`)
+- admin :3003 → ADMIN (`demo-admin@academy.local`)
+
+## 문서
+
+- [`docs/architecture.md`](docs/architecture.md) — 시스템 컨텍스트, 데이터 플로우, DB 스키마, API 컨트랙트
+- [`CLAUDE.md`](CLAUDE.md) — Claude / AI 도구용 가이드 (컨벤션 + 자주 빠지는 함정)
+- [`AGENTS.md`](AGENTS.md) — 작업 가이드 (자주 하는 일 + 디버깅 체크리스트)
+- [`services/media-service/AGENTS.md`](services/media-service/AGENTS.md) — media-service 전용 가이드
+
+## 관련 도구
+
+- [superpowers](https://github.com/MyoungSoo7/superpowers) — agentic skills framework. Claude Code 플러그인.
+- [ouroboros](https://github.com/MyoungSoo7/ouroboros) — Agent OS, spec-driven workflow.
