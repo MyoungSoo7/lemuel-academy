@@ -1,0 +1,40 @@
+# Build outputs
+build/
+target/
+out/
+.gradle/
+*.class
+*.jar
+*.war
+
+# Node
+node_modules/
+.next/
+.turbo/
+dist/
+*.log
+
+# Docker
+*.tar
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+secrets/
+*.key
+*.pem
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Media uploads (dev)
+uploads/
+hls-output/
+*.mp4
+*.ts
+*.m3u8
+!**/test-fixtures/**
