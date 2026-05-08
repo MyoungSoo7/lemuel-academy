@@ -41,7 +41,7 @@ class VideoListController(private val videos: VideoRepository) {
             ))
         }.orElse(ResponseEntity.notFound().build())
 
-    private fun Video.toMap() = mapOf(
+    private fun Video.toMap(): Map<String, Any?> = mapOf(
         "id" to id, "status" to status.name,
         "hlsMasterUrl" to hlsMasterUrl, "thumbnailUrl" to thumbnailUrl,
         "durationSec" to durationSec, "createdAt" to createdAt,
