@@ -99,5 +99,45 @@ services:
       - media-service
     restart: on-failure
 
+  learner:
+    build: ../frontend/learner
+    container_name: academy-learner
+    environment:
+      NEXT_PUBLIC_API_BASE: http://api-gateway:8080
+    depends_on:
+      - api-gateway
+    restart: on-failure
+
+  creator-studio:
+    build: ../frontend/creator-studio
+    container_name: academy-creator-studio
+    environment:
+      NEXT_PUBLIC_API_BASE: http://api-gateway:8080
+    depends_on:
+      - api-gateway
+    restart: on-failure
+
+  admin:
+    build: ../frontend/admin
+    container_name: academy-admin
+    environment:
+      NEXT_PUBLIC_API_BASE: http://api-gateway:8080
+    depends_on:
+      - api-gateway
+    restart: on-failure
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: academy-nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports: ["127.0.0.1:80:80"]
+    depends_on:
+      - learner
+      - creator-studio
+      - admin
+      - api-gateway
+    restart: on-failure
+
 volumes:
   postgres_data:

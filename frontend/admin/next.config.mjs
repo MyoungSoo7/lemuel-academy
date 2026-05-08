@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  basePath: "/admin",
+  output: "standalone",
   async rewrites() {
     return [
       { source: "/api/:path*",
