@@ -131,7 +131,7 @@ services:
     container_name: academy-nginx
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    ports: ["127.0.0.1:80:80"]
+    ports: ["127.0.0.1:8088:80"]  # 호스트 :80 은 시스템 nginx 가 이미 사용
     depends_on:
       - learner
       - creator-studio
