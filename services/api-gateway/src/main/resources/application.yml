@@ -35,14 +35,8 @@ academy:
   jwt:
     secret: ${JWT_SECRET:change-me-in-production-must-be-at-least-256-bits-long}
   auth:
-    public-paths:
-      - "/api/users/signup"
-      - "/api/users/login"
-      - "/api/users/oauth/**"
-      - "/api/users/dev/auto-login"
-      - "/api/catalog/courses"
-      - "/api/catalog/courses/**"  # GET 만, POST 는 필터에서 따로 체크
-      - "/actuator/**"
+    # 콤마-구분 (Spring 이 List<String> 으로 자동 변환). YAML list 는 @Value 바인딩 안 됨.
+    public-paths: "/api/users/signup,/api/users/login,/api/users/oauth/**,/api/users/dev/auto-login,/api/catalog/courses,/api/catalog/courses/**,/actuator/**"
 
 management:
   endpoints:
