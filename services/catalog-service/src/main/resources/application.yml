@@ -16,6 +16,7 @@ spring:
   flyway:
     schemas: catalog
     default-schema: catalog
+    baseline-on-migrate: true
 management:
   endpoints:
     web:

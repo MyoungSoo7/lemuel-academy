@@ -16,6 +16,7 @@ spring:
   flyway:
     schemas: media
     default-schema: media
+    baseline-on-migrate: true
   data:
     redis:
       url: ${REDIS_URL:redis://127.0.0.1:6389}

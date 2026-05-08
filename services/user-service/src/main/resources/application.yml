@@ -16,6 +16,7 @@ spring:
   flyway:
     schemas: users_svc
     default-schema: users_svc
+    baseline-on-migrate: true  # init.sql 로 만든 빈 스키마 위에서 처음 마이그레이션
 
 academy:
   jwt:
