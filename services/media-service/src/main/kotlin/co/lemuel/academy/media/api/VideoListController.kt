@@ -33,7 +33,7 @@ class VideoListController(private val videos: VideoRepository) {
     @GetMapping("/{id}/manifest")
     fun manifest(@PathVariable id: UUID): ResponseEntity<Map<String, Any?>> =
         videos.findById(id).map { v ->
-            ResponseEntity.ok(mapOf(
+            ResponseEntity.ok(mapOf<String, Any?>(
                 "url" to v.hlsMasterUrl,
                 "thumbnail" to v.thumbnailUrl,
                 "duration_sec" to v.durationSec,
