@@ -1,0 +1,91 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  backend:
+    name: backend (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - user-service
+          - catalog-service
+          - media-service
+          - api-gateway
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Build ${{ matrix.service }}
+        working-directory: services/${{ matrix.service }}
+        run: |
+          ./gradlew --no-daemon bootJar -x test
+        # 테스트는 컨테이너 의존이 많아서 일단 컴파일만 검증
+        # 추후 testcontainers 도입 시 -x test 제거
+
+      - name: Upload jar (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.service }}-jar
+          path: services/${{ matrix.service }}/build/libs/*.jar
+          retention-days: 7
+
+  frontend:
+    name: frontend (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - learner
+          - creator-studio
+          - admin
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/${{ matrix.app }}/package-lock.json
+
+      - name: Install + build ${{ matrix.app }}
+        working-directory: frontend/${{ matrix.app }}
+        env:
+          NEXT_PUBLIC_API_BASE: http://api-gateway:8080
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+
+      - name: Upload .next (artifact)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-${{ matrix.app }}-build
+          path: frontend/${{ matrix.app }}/.next/
+          retention-days: 3
+
+  docker-build-check:
+    name: Docker compose syntax
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose
+        run: |
+          docker compose -f infra/docker-compose.full.yml config > /dev/null
+          echo "✅ docker-compose.full.yml syntax OK"
