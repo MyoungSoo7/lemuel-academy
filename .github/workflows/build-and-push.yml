@@ -1,0 +1,154 @@
+name: build-push-scan
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+jobs:
+  backend:
+    name: 'backend ${{ matrix.service }} (build + scan + push)'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [user-service, catalog-service, media-service, api-gateway]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21, cache: gradle }
+
+      - name: Build jar
+        working-directory: services/${{ matrix.service }}
+        run: ./gradlew --no-daemon bootJar -x test
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        working-directory: services/${{ matrix.service }}
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.service }}:${{ github.sha }} .
+          docker tag ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.service }}:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.service }}:latest
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.service }}:${{ github.sha }}
+          format: sarif
+          output: trivy-${{ matrix.service }}.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'    # 처음엔 보고만, 차단 X
+          ignore-unfixed: true
+
+      - name: Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-${{ matrix.service }}.sarif
+          category: trivy-${{ matrix.service }}
+
+      - name: Push image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.service }}:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.service }}:latest
+
+  frontend:
+    name: 'frontend ${{ matrix.app }} (build + push)'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [learner, creator-studio, admin]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/${{ matrix.app }}/package-lock.json
+
+      - name: Install + build
+        working-directory: frontend/${{ matrix.app }}
+        env:
+          NEXT_PUBLIC_API_BASE: https://academy.lemuel.co.kr
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build + push image
+        working-directory: frontend/${{ matrix.app }}
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.app }}:${{ github.sha }} .
+          docker tag ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.app }}:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.app }}:latest
+          docker push ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.app }}:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.app }}:latest
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.app }}:${{ github.sha }}
+          format: sarif
+          output: trivy-${{ matrix.app }}.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+          ignore-unfixed: true
+
+      - name: Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-${{ matrix.app }}.sarif
+          category: trivy-${{ matrix.app }}
+
+  helm-deploy-bump:
+    name: 'bump tag in helm-deploy'
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout helm-deploy
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/helm-deploy
+          token: ${{ secrets.HELM_DEPLOY_PAT }}    # PAT with helm-deploy write
+          path: helm-deploy
+
+      - name: Bump tags via yq
+        run: |
+          cd helm-deploy
+          # values-prod.yaml 의 7개 image.tag 갱신
+          for svc in user-service catalog-service media-service api-gateway; do
+            yq e -i ".${svc//-/_}.image.tag = \"${{ github.sha }}\"" charts/academy/values-prod.yaml || true
+          done
+          for app in learner creator-studio admin; do
+            yq e -i ".${app//-/_}.image.tag = \"${{ github.sha }}\"" charts/academy/values-prod.yaml || true
+          done
+
+      - name: Commit + push
+        run: |
+          cd helm-deploy
+          git config user.email "ci@lemuel.co.kr"
+          git config user.name "academy-ci"
+          git add charts/academy/values-prod.yaml
+          git diff --cached --quiet || (git commit -m "bump academy ${{ github.sha }}" && git push)
