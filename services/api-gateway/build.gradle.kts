@@ -26,6 +26,7 @@ dependencies {
 dependencyManagement {
     imports {
         mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+        mavenBom("io.netty:netty-bom:4.1.133.Final")
     }
 }
 
