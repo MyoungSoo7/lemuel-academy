@@ -8,7 +8,6 @@ on:
 permissions:
   contents: read
   packages: write
-  security-events: write
 
 jobs:
   backend:
@@ -39,35 +38,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build + Push Docker image
         working-directory: services/${{ matrix.service }}
         run: |
           IMAGE=ghcr.io/myoungsoo7/academy-${{ matrix.service }}
           docker build -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
+          docker push $IMAGE:${{ github.sha }}
+          docker push $IMAGE:latest
 
-      - name: Trivy scan
+      - name: Trivy scan (report only)
         uses: aquasecurity/trivy-action@master
         continue-on-error: true
         with:
           image-ref: ghcr.io/myoungsoo7/academy-${{ matrix.service }}:${{ github.sha }}
-          format: sarif
-          output: trivy-${{ matrix.service }}.sarif
+          format: table
           severity: CRITICAL,HIGH
           exit-code: '0'
           ignore-unfixed: true
-
-      - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        if: always() && hashFiles(format('trivy-{0}.sarif', matrix.service)) != ''
-        with:
-          sarif_file: trivy-${{ matrix.service }}.sarif
-          category: trivy-${{ matrix.service }}
-
-      - name: Push image
-        run: |
-          IMAGE=ghcr.io/myoungsoo7/academy-${{ matrix.service }}
-          docker push $IMAGE:${{ github.sha }}
-          docker push $IMAGE:latest
 
   frontend:
     name: 'frontend ${{ matrix.app }}'
@@ -107,20 +94,12 @@ jobs:
           docker push $IMAGE:${{ github.sha }}
           docker push $IMAGE:latest
 
-      - name: Trivy scan
+      - name: Trivy scan (report only)
         uses: aquasecurity/trivy-action@master
         continue-on-error: true
         with:
           image-ref: ghcr.io/myoungsoo7/academy-${{ matrix.app }}:${{ github.sha }}
-          format: sarif
-          output: trivy-${{ matrix.app }}.sarif
+          format: table
           severity: CRITICAL,HIGH
           exit-code: '0'
           ignore-unfixed: true
-
-      - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        if: always() && hashFiles(format('trivy-{0}.sarif', matrix.app)) != ''
-        with:
-          sarif_file: trivy-${{ matrix.app }}.sarif
-          category: trivy-${{ matrix.app }}
