@@ -13,10 +13,6 @@ repositories { mavenCentral() }
 extra["springCloudVersion"] = "2024.0.0"
 
 dependencies {
-    constraints {
-        implementation("io.netty:netty-codec:4.1.133.Final")
-        implementation("io.netty:netty-handler:4.1.133.Final")
-    }
     implementation("org.springframework.cloud:spring-cloud-starter-gateway")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
