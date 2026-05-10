@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm") version "2.0.21"
     kotlin("plugin.spring") version "2.0.21"
-    id("org.springframework.boot") version "3.4.1"
+    id("org.springframework.boot") version "3.4.5"
     id("io.spring.dependency-management") version "1.1.7"
 }
 
@@ -13,6 +13,10 @@ repositories { mavenCentral() }
 extra["springCloudVersion"] = "2024.0.0"
 
 dependencies {
+    constraints {
+        implementation("io.netty:netty-codec:4.1.133.Final")
+        implementation("io.netty:netty-handler:4.1.133.Final")
+    }
     implementation("org.springframework.cloud:spring-cloud-starter-gateway")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
