@@ -11,11 +11,13 @@ version = "0.1.0"
 java.sourceCompatibility = JavaVersion.VERSION_21
 repositories { mavenCentral() }
 
-dependencies {
-    constraints {
-        implementation("io.netty:netty-codec:4.1.133.Final")
-        implementation("io.netty:netty-handler:4.1.133.Final")
+dependencyManagement {
+    imports {
+        mavenBom("io.netty:netty-bom:4.1.133.Final")
     }
+}
+
+dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
@@ -28,8 +30,8 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     // S3-compatible (R2)
-    implementation("software.amazon.awssdk:s3:2.29.20")
-    implementation("software.amazon.awssdk:auth:2.29.20")
+    implementation("software.amazon.awssdk:s3:2.31.7")
+    implementation("software.amazon.awssdk:auth:2.31.7")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
