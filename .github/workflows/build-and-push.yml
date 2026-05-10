@@ -42,14 +42,14 @@ jobs:
       - name: Build Docker image
         working-directory: services/${{ matrix.service }}
         run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.service }}
+          IMAGE=ghcr.io/myoungsoo7/academy-${{ matrix.service }}
           docker build -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
 
       - name: Trivy scan
         uses: aquasecurity/trivy-action@master
         continue-on-error: true
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.service }}:${{ github.sha }}
+          image-ref: ghcr.io/myoungsoo7/academy-${{ matrix.service }}:${{ github.sha }}
           format: sarif
           output: trivy-${{ matrix.service }}.sarif
           severity: CRITICAL,HIGH
@@ -65,7 +65,7 @@ jobs:
 
       - name: Push image
         run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.service }}
+          IMAGE=ghcr.io/myoungsoo7/academy-${{ matrix.service }}
           docker push $IMAGE:${{ github.sha }}
           docker push $IMAGE:latest
 
@@ -102,7 +102,7 @@ jobs:
       - name: Build + push image
         working-directory: frontend/${{ matrix.app }}
         run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.app }}
+          IMAGE=ghcr.io/myoungsoo7/academy-${{ matrix.app }}
           docker build -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
           docker push $IMAGE:${{ github.sha }}
           docker push $IMAGE:latest
@@ -111,7 +111,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         continue-on-error: true
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/academy-${{ matrix.app }}:${{ github.sha }}
+          image-ref: ghcr.io/myoungsoo7/academy-${{ matrix.app }}:${{ github.sha }}
           format: sarif
           output: trivy-${{ matrix.app }}.sarif
           severity: CRITICAL,HIGH
